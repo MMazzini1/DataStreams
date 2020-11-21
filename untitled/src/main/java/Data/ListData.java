@@ -64,190 +64,6 @@ public class ListData<T> {
 
 	}
 
-	/**
-	 * OUTER JOINS: define outer join como la operacion de consolidar dos listas, obteniendo resultados si matchean + los que no matchean del lado izquierdo + los que no matchean del lado derecho
-	*/
-	public ListData<T> outerJoin(ListData<T> toMerge, BiFunction<T, T, T> merger) {
-		List<T> mergedResult = new ArrayList<T>();
-		HashSet<T> notProcessedThis = new HashSet<>(data);
-		HashSet<T> notProcessedOther = new HashSet<>(toMerge.data);
-		for (T thisItem : data) {
-			for (T otherItem : toMerge.data) {
-				if (thisItem.equals(otherItem)) {
-					T merged = merger.apply(thisItem, otherItem);
-					mergedResult.add(merged);
-					notProcessedThis.remove(thisItem);
-					notProcessedOther.remove(otherItem);
-				}
-			}
-		}
-		mergedResult.addAll(notProcessedThis);
-		mergedResult.addAll(notProcessedOther);
-		return ListData.of(mergedResult);
-	}
-
-	/**  LEFT JOINS se define left join como la operacion de consolidar dos listas, obteniendo resultados si matchean + los que no matchean del lado izquierdo */
-
-	/**  LEFT JOIN MISMO TIPO*/
-	//	public ListData<T> leftJoin(ListData<T> toMerge, BiFunction<T, T, T> merger) {
-	//		List<T> mergedResult = new ArrayList<>();
-	//		HashSet<T> added = new HashSet<T>(this.data);
-	//		for (T otherItem : toMerge.data) {
-	//			for (T thisItem: this.data) {
-	//				if (thisItem.equals(otherItem)) {
-	//					T merged = merger.apply(thisItem, otherItem);
-	//					mergedResult.add(merged);
-	//				}
-	//			}
-	//		}
-	//		mergedResult.addAll(this.removeAux(added));
-	//		return ListData.of(mergedResult);
-	//	}
-
-	/**
-	 * LEFT JOIN DISTINTO TIPO CON FUNCION DEFAULTER  Y THROWS SI HAY MÁS DE UN MATCH PARA UN ELEMENTO DADO DE CUALQUIERA DE LAS DOS LISTAS
-	 */
-	public <X, K> ListData<K> leftJoinThrowsAtMostOneMatch(ListData<X> toMerge, BiFunction<T, X, K> merger, Function<T, K> defaulter) {
-		List<K> mergedResult = new ArrayList<>();
-		HashSet<T> notAdded = new HashSet<T>(data);
-		for (T thisItem : data) {
-			boolean matched = false;
-			for (X otherItem : toMerge.data) {
-				if (thisItem.equals(otherItem)) {
-					if (matched) {
-						throw new RuntimeException("Doble match para un mismo item: " + otherItem.toString());
-					}
-					K merged = merger.apply(thisItem, otherItem);
-					mergedResult.add(merged);
-					notAdded.remove(thisItem);
-					matched = true;
-				}
-			}
-		}
-		mergedResult.addAll(notAdded.stream().map(defaulter::apply).collect(Collectors.toList()));
-		return ListData.of(mergedResult);
-	}
-
-	public ListData<T> leftJoinThrowsAtMostOneMatch(ListData<T> toMerge, BiFunction<T, T, T> merger){
-		ListData<T> result = leftJoinThrowsAtMostOneMatch(toMerge, merger, a -> a);
-		return result;
-	}
-
-	/**  INNER JOINS: se define inner join como la operacion de consolidar dos listas, obteniendo resultado solos en los casos que matchean */
-
-	/**  INNER JOIN CON MERGER  */
-	//	public <X, K> ListData<K> innerJoin(ListData<X> toMerge, BiFunction<T, X, K> merger) {
-	//		List<K> mergedResult = new ArrayList<>();
-	//		for (X otherItem : toMerge.data) {
-	//			for (T thisItem: data) {
-	//					if (thisItem.equals(otherItem)) {
-	//						K merged = merger.apply(thisItem, otherItem);
-	//						mergedResult.add(merged);
-	//					}
-	//			}
-	//		}
-	//		return ListData.of(mergedResult);
-	//	}
-
-	/**  INNER JOIN CON MERGER Y MATCHER  */
-	//	public <X, K> ListData<K> innerJoin(ListData<X> toMerge, BiFunction<T, X, K> merger, BiPredicate<T, X> matcher) {
-	//		List<K> mergedResult = new ArrayList<>();
-	//		for (X otherItem : toMerge.data) {
-	//			for (T thisItem : data) {
-	//				if (matcher.test(thisItem, otherItem)) {
-	//					K merged = merger.apply(thisItem, otherItem);
-	//					mergedResult.add(merged);
-	//				}
-	//			}
-	//		}
-	//		return ListData.of(mergedResult);
-	//	}
-
-	/**
-	 * INNER JOIN CON MERGER Y THROWS SI AL MENSO ALGUN ELEMENTO DEL LEFT SIDE NO JOINEA CON NADA. SE ADMITE MAS DE UN MATCH
-	 */
-	public <X, K> ListData<K> innerJoinThrowsLeftAtLeastOneMatch(ListData<X> toMerge, BiFunction<T, X, K> merger, BiPredicate<T, X> matcher) {
-		List<K> mergedResult = new ArrayList<>();
-		for (T thisItem : data) {
-			boolean matched = false;
-			for (X otherItem : toMerge.data) {
-				if (matcher.test(thisItem, otherItem)) {
-					K merged = merger.apply(thisItem, otherItem);
-					mergedResult.add(merged);
-					matched = true;
-				}
-			}
-			if (!matched) {
-				throw new RuntimeException("Ningún match para el item: " + thisItem.toString());
-			}
-		}
-		return ListData.of(mergedResult);
-	}
-
-	/**
-	 * INNER JOIN CON MERGER Y MATCHER Y THROWS SI HAY NINGÚN O MÁS DE UN MATCH PARA UN ELEMENTO DADO DE CUALQUIERA DE LAS DOS LISTAS
-	 */
-	public <X, K> ListData<K> innerJoinThrowsAlwaysOneMatch(ListData<X> toMerge, BiFunction<T, X, K> merger, BiPredicate<T, X> matcher) {
-		List<K> mergedResult = new ArrayList<>();
-		for (X otherItem : toMerge.data) {
-			boolean matched = false;
-			for (T thisItem : data) {
-				if (matcher.test(thisItem, otherItem)) {
-					if (matched) {
-						throw new RuntimeException("Doble match para un mismo item: " + otherItem.toString());
-					}
-					K merged = merger.apply(thisItem, otherItem);
-					mergedResult.add(merged);
-					matched = true;
-				}
-			}
-			if (!matched) {
-				throw new RuntimeException("Ningún match para el item: " + otherItem.toString());
-			}
-		}
-		return ListData.of(mergedResult);
-	}
-
-	public <X, K> ListData<K> innerJoinThrowsAlwaysOneMatch(ListData<X> toMerge, BiFunction<T, X, K> merger) {
-		List<K> mergedResult = new ArrayList<>();
-		for (X otherItem : toMerge.data) {
-			boolean matched = false;
-			for (T thisItem : data) {
-				if (thisItem.equals(otherItem)) {
-					if (matched) {
-						throw new RuntimeException("Doble match para un mismo item: " + otherItem.toString());
-					}
-					K merged = merger.apply(thisItem, otherItem);
-					mergedResult.add(merged);
-					matched = true;
-				}
-			}
-			if (!matched) {
-				throw new RuntimeException("Ningún match para el item: " + otherItem.toString());
-			}
-		}
-		return ListData.of(mergedResult);
-	}
-
-
-	/**
-	 * INNER JOIN CON MERGER Y MATCHER Y THROWS SI HAY NINGÚN O MÁS DE UN MATCH PARA UN ELEMENTO DADO DE CUALQUIERA DE LAS DOS LISTAS
-	 */
-	public <X, K> ListData<K> innerJoin(ListData<X> toMerge, BiFunction<T, X, K> merger, BiPredicate<T, X> matcher) {
-		List<K> mergedResult = new ArrayList<>();
-		for (X otherItem : toMerge.data) {
-			boolean matched = false;
-			for (T thisItem : data) {
-				if (matcher.test(thisItem, otherItem)) {
-					K merged = merger.apply(thisItem, otherItem);
-					mergedResult.add(merged);
-					matched = true;
-				}
-			}
-		}
-		return ListData.of(mergedResult);
-	}
-
 
 	// Filter devuelve lista o elemento unico
 	public <K> ListData<K> partitionAndMap(Predicate<T> predicate, Function<T,K> trueMapper, Function<T,K> falseMapper) {
@@ -295,14 +111,11 @@ public class ListData<T> {
 	}
 
 
-
 	public <V> MapData<V, ListData<T>> groupByWrapped(Function<T, V> classifier) {
 		MapData<V, List<T>> vListMapData = groupBy(classifier);
 		MapData<V, ListData<T>> vListDataMapData = vListMapData.remapValues(list -> ListData.of(list));
 		return vListDataMapData;
 	}
-
-
 
 
 
@@ -341,7 +154,72 @@ public class ListData<T> {
 		return ts;
 	}
 
-	public ArrayList<T> uniqueBy(String message, BiPredicate<T, T> matcher) {
+
+
+
+	private static class HashEqualsWrapper<E>{
+		private E object;
+		private Function<E, ?>[] getters;
+
+		public static <K> HashEqualsWrapper<K> of(K k, Function<K, ?>... getter) {
+			HashEqualsWrapper<K> kHashEqualsWrapper = new HashEqualsWrapper<>();
+			kHashEqualsWrapper.object = k;
+			kHashEqualsWrapper.getters = getter;
+			return kHashEqualsWrapper;
+
+		}
+
+		@Override public boolean equals(Object o) {
+			for (Function<E, ?> getter: getters){
+				if (!getter.apply(object).equals(getter.apply(((HashEqualsWrapper<E>) o).object))){
+					return false;
+				}
+			}
+			return true;
+		}
+
+		@Override public int hashCode() {
+			int hashCode = 0;
+			for (Function<E, ?> getter: getters){
+				int partialHashCode = getter.apply(object).hashCode();
+				hashCode = hashCode + partialHashCode;
+			}
+			return hashCode;
+		}
+
+	}
+
+
+
+	//TODO deleteDuplicatesBy
+
+	//TODO que acepte infinitas funciones
+	//TODO hashset, deberia tener complejidad lineal
+	//https://stackoverflow.com/questions/5453226/java-need-a-hash-map-where-one-supplies-a-function-to-do-the-hashing
+//	public boolean uniqueBy(Function<T, ?> getter) {
+//		HashSet<HashEqualsWrapper<T>> uniques = new HashSet<>();
+//		List<HashEqualsWrapper<T>> wrappedList = data.stream().map(item -> HashEqualsWrapper.of(item, getter)).collect(Collectors.toList());
+//		uniques.addAll(wrappedList);
+//		return uniques.size() == data.size();
+//	}
+
+
+	/**  O(n) */
+	public boolean uniqueBy(Function<T, ?>... getter) {
+		if (getter.length == 0){
+			throw new IllegalArgumentException("UniqueBy debe recibir al menos un getter. Llamar a unique si se desea utilizar el hash/equals"
+					+ "default del objeto");
+		}
+		HashSet<HashEqualsWrapper<T>> uniques = new HashSet<>();
+		List<HashEqualsWrapper<T>> wrappedList = data.stream().map(item -> HashEqualsWrapper.of(item, getter)).collect(Collectors.toList());
+		uniques.addAll(wrappedList);
+		return uniques.size() == data.size();
+	}
+
+
+	//TODO hashset, deberia tener complejidad lineal
+	//https://stackoverflow.com/questions/5453226/java-need-a-hash-map-where-one-supplies-a-function-to-do-the-hashing
+	public ArrayList<T> uniqueBy(BiPredicate<T, T> matcher) {
 		ArrayList<T> repeated = new ArrayList<>();
 		for (int i = 0; i < data.size(); i++) {
 			for (int j = 0; j < data.size(); j++) {
@@ -355,9 +233,10 @@ public class ListData<T> {
 			}
 		}
 		boolean unique = repeated.isEmpty();
-		System.out.println(message + " is unique: " + unique);
 		return repeated;
 	}
+
+
 
 	public void forEach(Consumer<T> consumer) {
 		data.stream().forEach(consumer::accept);
@@ -379,7 +258,7 @@ public class ListData<T> {
 	}
 
 
-	public ListData<T> removeDuplicates() {
+	public ListData<T> deleteDuplicates() {
 		HashSet<T> ts = new HashSet<>();
 		ts.addAll(data);
 		return ListData.of(new ArrayList<>(ts));
