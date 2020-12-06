@@ -1,5 +1,7 @@
 package TestModel;
 
+import java.util.List;
+
 public class Person {
 
 	private Integer age;
@@ -7,7 +9,10 @@ public class Person {
 	private Long id;
 	private Adress adress;
 
+	public List list = null;
 
+	public Person() {
+	}
 
 	public Person(Integer age, String name, Long id, Adress adress) {
 		this.age = age;
