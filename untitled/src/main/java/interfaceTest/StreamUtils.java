@@ -1,4 +1,4 @@
-package Data;
+package interfaceTest;
 
 
 import interfaceTest.LStream.LStream;
@@ -56,8 +56,8 @@ public class StreamUtils {
 		return beanPredicate;
 	}
 
-	public static <A, B> Map<B, List<A>> groupBy(List<A> list, Function<A, B> classifier, Collector<? super A, Object, List<A>> downstream) {
-		return list.stream().collect(Collectors.groupingBy(classifier::apply, downstream));
+	public static <A, B> Map<B, List<A>> groupBy(Collection<A> collection, Function<A, B> classifier, Collector<? super A, Object, List<A>> downstream) {
+		return collection.stream().collect(Collectors.groupingBy(classifier::apply, downstream));
 	}
 
 

@@ -1,32 +1,58 @@
-package interfaceTest;
+package interfaceTest.LStream;
 
+import TestModel.Adress;
 import TestModel.Person;
+import interfaceTest.MStream.EagerMStream;
+import interfaceTest.MStream.MStream;
+import interfaceTest.StreamUtils;
 
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.Collectors;
 
-public class EagerListStream<T> implements AbstractListStream<T, EagerListStream<T>> {
+public class EagerLStream<T> implements LStream<T> {
 
 	public static void main(String[] args) {
 
-		EagerListStream<Person> of = of(new ArrayList<Person>());
-
-		MapStream<Integer, MapStream<String, EagerListStream<Person>>> integerMapStreamMapStream = of.groupBy(person -> person.getAge(),
-				person -> person.toString());
-
-		EagerListStream<Person> filter = of.filter(p -> p.getAge() > 3);
-
-		EagerListStream<Boolean> aa = filter.map(p -> p.getName().equals("aa"));
+		//TODO support parallel evaluation
 
 
-		
+		List<Person> lista = Arrays.asList(new Person(21, "Pablo", 1232332L, new Adress("Cabildo", 1232, 4)),
+				new Person(33, "María", 17762322L, new Adress("Amenabar", 1232, 4)),
+				new Person(21, "José", 1878732L, new Adress("Libertador", 1232, 4)),
+				new Person(21, "Pablo", 124334332L, new Adress("Santa Fé", 1232, 4)),
+				new Person(59, "Josef", 124334332L, new Adress("Santa Fé", 1232, 4)),
+				new Person(100, "Jeronimo", 124334332L, new Adress("Santa Fé", 1232, 4)),
+				new Person(121, "Pablo", 124334332L, new Adress("Santa Fé", 1232, 4)),
+				new Person(200, "Pablo", 124334332L, new Adress("Santa Fé", 1232, 4))
 
-		//		AbstractListStream<AbstractListStream<Person>> buckets = grouped.getBuckets(Person.class);
+		);
 
+		LStream<Person> persons = LStream.of(lista, false);
+		LStream<Person> filtered = persons.filter(person -> person.getName().equals("Pablo"));
+		LStream<String> names = filtered.map(a -> a.getName());
 
-
-
+		Collection<String> strings = names.get();
+//
+//		MStream<Integer, MStream<Integer, LStream<String>>> integerMStreamMStream = names.groupBy(p -> p.length(),
+//				p -> p.hashCode());
+//
+//
+//
+//
+//
+//		LStream<LStream<String>> buckets = integerMStreamMStream.getBuckets(String.class);
+//		Collection<LStream<String>> lStreams = buckets.get();
+//
+//
+//
+//		//Todo pasar un objeto como si fuera un collector
+//		LStream<Integer> keys = integerMStreamMStream.keys();
+//		List<Integer> asList = keys.getAsList();
+//
+//
+//		List<Integer> integers1 = Arrays.asList(1, 2, 3);
+//		integers1.stream().collect(Collectors.toSet());
 
 
 	}
@@ -36,33 +62,35 @@ public class EagerListStream<T> implements AbstractListStream<T, EagerListStream
 
 	private Collection<T> collection;
 
-	public EagerListStream(Collection<T> collection) {
+	public EagerLStream(Collection<T> collection) {
 		this.collection = collection;
 	}
 
 
 
 
-	public static <A> EagerListStream<A> of(Collection<A> coll){
-		return new EagerListStream<>(coll);
+	public static <A> EagerLStream<A> of(Collection<A> coll){
+		return new EagerLStream<>(coll);
 
 	}
 
 
-	@Override public <K> MapStream<K, EagerListStream<T>> groupBy(Function<T, K> classifier) {
+	@Override public <K> MStream<K, LStream<T>> groupBy(Function<T, K> classifier) {
 		//hacer clasificacion
-		HashMap<K, EagerListStream<T>> map = new HashMap<>();
-		return MapStream.of(map);
+		Map<K, LStream<T>> klStreamMap = StreamUtils.groupBy(collection, classifier);
+		MStream<K, LStream<T>> of = EagerMStream.of(klStreamMap);
+		return of;
 	}
 
-	@Override public <K1,K2> MapStream<K1,MapStream<K2, EagerListStream<T>>> groupBy(Function<T, K1> classifier1, Function<T, K2> classifier2) {
+	@Override public <K1,K2> MStream<K1, MStream<K2, LStream<T>>> groupBy(Function<T, K1> classifier1, Function<T, K2> classifier2) {
 		//hacer clasificacion
-		HashMap<K1, Map<K2, EagerListStream<T>>> map = new HashMap<>();
-		return MapStream.of(map);
+		Map<K1, MStream<K2, LStream<T>>> klStreamMap = null;
+		MStream<K1, MStream<K2, LStream<T>>> of = EagerMStream.of(klStreamMap);
+		return of;
 	}
 
 
-	@Override public EagerListStream<T> findDuplicates() {
+	@Override public EagerLStream<T> findDuplicates() {
 		HashSet<T> uniqueValues = new HashSet<>();
 		List<T> duplicates = new ArrayList<>();
 		for (T item: collection){
@@ -71,7 +99,7 @@ public class EagerListStream<T> implements AbstractListStream<T, EagerListStream
 				duplicates.add(item);
 			}
 		}
-		return EagerListStream.of(duplicates);
+		return EagerLStream.of(duplicates);
 
 //		List<Integer> duplicates = IntStream.of( 1, 2, 3, 2, 1, 2, 3, 4, 2, 2, 2 )
 //				.boxed()
@@ -84,7 +112,7 @@ public class EagerListStream<T> implements AbstractListStream<T, EagerListStream
 
 	}
 
-	@Override public EagerListStream<T> sort(Function<? super T, ? extends Comparable>... comparators) {
+	@Override public EagerLStream<T> sort(Function<? super T, ? extends Comparable>... comparators) {
 
 		Queue<Comparator<T>> comparatorQueue = new LinkedList<>();
 		for (Function<? super T, ? extends Comparable> function : comparators) {
@@ -97,7 +125,7 @@ public class EagerListStream<T> implements AbstractListStream<T, EagerListStream
 
 	}
 
-	@Override public EagerListStream<T> sort(Comparator<T>... comparators) {
+	@Override public EagerLStream<T> sort(Comparator<T>... comparators) {
 
 		Queue<Comparator<T>> comparatorQueue = new LinkedList<>();
 		Collections.addAll(comparatorQueue, comparators);
@@ -119,10 +147,10 @@ public class EagerListStream<T> implements AbstractListStream<T, EagerListStream
 
 	}
 
-	// Filter devuelve lista o elemento unico
-	@Override public EagerListStream<T> filter(Predicate<T> predicate) {
+
+	@Override public EagerLStream<T> filter(Predicate<T> predicate) {
 		List<T> collect = collection.stream().filter(predicate::test).collect(Collectors.toList());
-		return EagerListStream.of(collect);
+		return new EagerLStream<>(collect);
 	}
 
 
@@ -130,8 +158,12 @@ public class EagerListStream<T> implements AbstractListStream<T, EagerListStream
 		return collection;
 	}
 
-	@Override public <B> EagerListStream<B> map(Function<T, B> mapper) {
-		return EagerListStream.of(collection.stream().map(mapper::apply).collect(Collectors.toList()));
+	@Override public List<T> getAsList() {
+		return null;
+	}
+
+	@Override public <B> EagerLStream<B> map(Function<T, B> mapper) {
+		return new EagerLStream(collection.stream().map(mapper::apply).collect(Collectors.toList()));
 	}
 
 
@@ -170,7 +202,12 @@ public class EagerListStream<T> implements AbstractListStream<T, EagerListStream
 		return;
 	}
 
-	@Override public HashSet<T> symmetricDiference(EagerListStream<T> other) {
+
+	@Override public HashSet<T> symmetricDiference(LStream<T> other) {
+		return null;
+	}
+
+	public HashSet<T> symmetricDiference(EagerLStream<T> other) {
 		HashSet<T> difference = new HashSet<>();
 		difference.addAll(collection);
 		difference.addAll(other.collection);
@@ -178,17 +215,17 @@ public class EagerListStream<T> implements AbstractListStream<T, EagerListStream
 		return difference;
 	}
 
-	@Override public EagerListStream<T> intersection(EagerListStream<T> other) {
+	 public EagerLStream<T> intersection(EagerLStream<T> other) {
 		Set<T> intersection = new HashSet<T>(collection);
 		intersection.retainAll(other.collection);
-		return EagerListStream.of(new ArrayList<>(intersection));
+		return EagerLStream.of(new ArrayList<>(intersection));
 	}
 
 
-	@Override public EagerListStream<T> removeDuplicates() {
+	@Override public EagerLStream<T> removeDuplicates() {
 		HashSet<T> ts = new HashSet<>();
 		ts.addAll(collection);
-		return EagerListStream.of(new ArrayList<>(ts));
+		return EagerLStream.of(new ArrayList<>(ts));
 	}
 
 	@Override public boolean has(T item) {

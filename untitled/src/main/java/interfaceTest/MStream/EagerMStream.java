@@ -1,4 +1,7 @@
-package interfaceTest;
+package interfaceTest.MStream;
+
+import interfaceTest.LStream.EagerLStream;
+import interfaceTest.LStream.LStream;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,9 +9,13 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class MapStream<K,V>  {
+public class EagerMStream<K,V> implements MStream<K, V> {
 
 	private HashMap<K,V> map;
+
+	public static <A, B> MStream<A, B> of(Map<A, B> grouped) {
+		return null;
+	}
 
 //
 //	private final Helper<O> helper = new Helper(){
@@ -50,7 +57,7 @@ public class MapStream<K,V>  {
 //
 //	}
 
-	public <A> MapStream<K, A> remapValues(Function<V,A> remapper) {
+	@Override public <A> MStream remapValues(Function<V, A> remapper) {
 //		Map<K, V> data = this.data;
 //		Map<K, A> map = data.entrySet().stream().map(entry -> Pair.of(entry.getKey(), remapper.apply(entry.getValue())))
 //				.collect(Collectors.toMap(pair -> pair.getLeft(), pair -> pair.getRight()));
@@ -60,7 +67,7 @@ public class MapStream<K,V>  {
 
 	}
 
-	public MapStream<K, V> merge(MapStream<K,V> toMerge, BinaryOperator<V> remapping){
+	@Override public MStream<K,V> merge(MStream<K,V> toMerge, BinaryOperator<V> remapping){
 //		Stream<Map.Entry<K, V>> combinedStream = Stream.concat(data.entrySet().stream(), toMerge.data.entrySet().stream());
 //		Map<K, V> collect = combinedStream.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, remapping));
 //		return MapData.of(collect);
@@ -69,32 +76,30 @@ public class MapStream<K,V>  {
 	}
 
 
-	public MapStream<K,V> filterKeys(Predicate<K> predicate){
+	@Override public MStream filterKeys(Predicate<K> predicate){
 		return null;
 	}
 
-	public MapStream<K,V> filterValues(Predicate<V> predicate){
+	@Override public MStream filterValues(Predicate<V> predicate){
 		return null;
 	}
 
 
-	public static <A, B> MapStream of(Map<A, B> grouped) {
+
+
+	@Override public EagerLStream<V> values(){
+		return EagerLStream.of(map.values());
+	}
+
+	@Override public <ValueType> LStream<LStream<ValueType>> getBuckets(Class<ValueType> clazz){
 		return null;
 	}
 
-	public AbstractListStream<V> values(){
-		return EagerListStream.of(map.values());
+	@Override public EagerLStream<K> keys(){
+		return  EagerLStream.of(map.keySet());
 	}
 
-	public <ValueType> AbstractListStream<AbstractListStream<ValueType>> getBuckets(Class<ValueType> clazz){
-		return null;
-	}
-
-	public AbstractListStream<K> keys(){
-		return  EagerListStream.of(map.keySet());
-	}
-
-	public HashMap<K, V> get(){
+	 public HashMap<K, V> get(){
 		return map;
 	}
 
