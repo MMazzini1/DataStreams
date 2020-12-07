@@ -2,22 +2,33 @@ package interfaceTest.MStream;
 
 import interfaceTest.LStream.EagerLStream;
 import interfaceTest.LStream.LStream;
+import interfaceTest.Pair;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class EagerMStream<K,V> implements MStream<K, V> {
 
-	private HashMap<K,V> map;
+	private Map<K,V> map;
 
 	public static <A, B> MStream<A, B> of(Map<A, B> grouped) {
-		return null;
+		EagerMStream<A, B> kvEagerMStream =  new EagerMStream<A,B>(grouped);
+		return kvEagerMStream;
 	}
 
-//
+	public EagerMStream(Map<K, V> map) {
+		this.map = map;
+	}
+
+//	public static <A,B> EagerMStream<A,B> of(Map<A,B> map){
+//		EagerMStream<A,B> kvEagerMStream =  new EagerMStream<A,B>(map);
+//		return kvEagerMStream;
+//	}
+	//
 //	private final Helper<O> helper = new Helper(){
 //
 //	};
@@ -57,13 +68,12 @@ public class EagerMStream<K,V> implements MStream<K, V> {
 //
 //	}
 
-	@Override public <A> MStream remapValues(Function<V, A> remapper) {
-//		Map<K, V> data = this.data;
-//		Map<K, A> map = data.entrySet().stream().map(entry -> Pair.of(entry.getKey(), remapper.apply(entry.getValue())))
-//				.collect(Collectors.toMap(pair -> pair.getLeft(), pair -> pair.getRight()));
-//
-//		return MapData.of(map);
-		return null;
+	@Override public <A> MStream<K,A> remapValues(Function<V, A> remapper) {
+		Map<K, A> result = map.entrySet().stream().map(entry -> Pair.of(entry.getKey(), remapper.apply(entry.getValue())))
+				.collect(Collectors.toMap(pair -> pair.getLeft(), pair -> pair.getRight()));
+
+		EagerMStream eagerMStream = new EagerMStream(result);
+		return eagerMStream;
 
 	}
 
@@ -87,7 +97,7 @@ public class EagerMStream<K,V> implements MStream<K, V> {
 
 
 
-	@Override public EagerLStream<V> values(){
+	@Override public EagerLStream<V> getValues(){
 		return EagerLStream.of(map.values());
 	}
 
@@ -95,13 +105,17 @@ public class EagerMStream<K,V> implements MStream<K, V> {
 		return null;
 	}
 
-	@Override public EagerLStream<K> keys(){
+	@Override public EagerLStream<K> getKeys(){
 		return  EagerLStream.of(map.keySet());
 	}
 
-	 public HashMap<K, V> get(){
+	 public Map<K, V> get(){
 		return map;
 	}
 
-
+//	@Override public String toString() {
+//
+//			return "[" +  " EagerMStream = " + map.toString() +   " ]";
+//
+//	}
 }

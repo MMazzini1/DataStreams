@@ -56,4 +56,32 @@ public class Person {
 	public void setAdress(Adress adress) {
 		this.adress = adress;
 	}
+
+	@Override public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (!(o instanceof Person))
+			return false;
+
+		Person person = (Person) o;
+
+		if (getAge() != null ? !getAge().equals(person.getAge()) : person.getAge() != null)
+			return false;
+		if (getName() != null ? !getName().equals(person.getName()) : person.getName() != null)
+			return false;
+		if (getId() != null ? !getId().equals(person.getId()) : person.getId() != null)
+			return false;
+		if (getAdress() != null ? !getAdress().equals(person.getAdress()) : person.getAdress() != null)
+			return false;
+		return list != null ? list.equals(person.list) : person.list == null;
+	}
+
+	@Override public int hashCode() {
+		int result = getAge() != null ? getAge().hashCode() : 0;
+		result = 31 * result + (getName() != null ? getName().hashCode() : 0);
+		result = 31 * result + (getId() != null ? getId().hashCode() : 0);
+		result = 31 * result + (getAdress() != null ? getAdress().hashCode() : 0);
+		result = 31 * result + (list != null ? list.hashCode() : 0);
+		return result;
+	}
 }
