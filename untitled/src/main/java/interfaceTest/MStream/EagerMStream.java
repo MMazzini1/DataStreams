@@ -6,6 +6,7 @@ import interfaceTest.Pair;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -68,6 +69,35 @@ public class EagerMStream<K,V> implements MStream<K, V> {
 //
 //	}
 
+
+
+	@Override public MStream<K,V> merge(MStream<K,V> toMerge, BinaryOperator<V> remapping){
+		//		Stream<Map.Entry<K, V>> combinedStream = Stream.concat(data.entrySet().stream(), toMerge.data.entrySet().stream());
+		//		Map<K, V> collect = combinedStream.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, remapping));
+		//		return MapData.of(collect);
+		return null;
+	}
+
+	@Override public MStream<K, LStream<V>> mergeAsLists(MStream<K, V> toMerge) {
+		return null;
+	}
+
+	@Override public <VV, A> MStream<K, A> leftJoin(MStream<K, VV> other, BiFunction<V, VV, A> remapping, Function<V, A> defaultMapping) {
+		return null;
+	}
+
+	public  <VV,A> MStream<K,A> rightJoin(MStream<K,VV> other, BiFunction<V,VV,A> remapping) {
+		return null;
+	}
+	//
+	public  <VV,A> MStream<K,A> leftJoin(MStream<K,VV> other, BiFunction<V,VV,A> remapping) {
+		return null;
+	}
+	//
+	public  <VV,A> MStream<K,A> innerJoin(MStream<K,VV> other, BiFunction<V,VV,A> remapping) {
+		return null;
+	}
+
 	@Override public <A> MStream<K,A> remapValues(Function<V, A> remapper) {
 		Map<K, A> result = map.entrySet().stream().map(entry -> Pair.of(entry.getKey(), remapper.apply(entry.getValue())))
 				.collect(Collectors.toMap(pair -> pair.getLeft(), pair -> pair.getRight()));
@@ -76,15 +106,6 @@ public class EagerMStream<K,V> implements MStream<K, V> {
 		return eagerMStream;
 
 	}
-
-	@Override public MStream<K,V> merge(MStream<K,V> toMerge, BinaryOperator<V> remapping){
-//		Stream<Map.Entry<K, V>> combinedStream = Stream.concat(data.entrySet().stream(), toMerge.data.entrySet().stream());
-//		Map<K, V> collect = combinedStream.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, remapping));
-//		return MapData.of(collect);
-		return null;
-
-	}
-
 
 	@Override public MStream filterKeys(Predicate<K> predicate){
 		return null;
@@ -97,7 +118,7 @@ public class EagerMStream<K,V> implements MStream<K, V> {
 
 
 
-	@Override public EagerLStream<V> getValues(){
+	@Override public LStream<V> getValues(){
 		return EagerLStream.of(map.values());
 	}
 
@@ -105,7 +126,7 @@ public class EagerMStream<K,V> implements MStream<K, V> {
 		return null;
 	}
 
-	@Override public EagerLStream<K> getKeys(){
+	@Override public LStream<K> getKeys(){
 		return  EagerLStream.of(map.keySet());
 	}
 

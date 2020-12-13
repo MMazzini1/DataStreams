@@ -1,4 +1,4 @@
-package TestModel;
+package interfaceTest.TestModel;
 
 public class Adress {
 

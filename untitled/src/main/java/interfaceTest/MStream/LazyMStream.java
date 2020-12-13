@@ -1,21 +1,19 @@
 package interfaceTest.MStream;
 
-import TestModel.Adress;
-import TestModel.Person;
 import interfaceTest.LStream.EagerLStream;
 import interfaceTest.LStream.LStream;
 import interfaceTest.LStream.LazyLStream;
 import interfaceTest.Pair;
+import interfaceTest.StreamUtils;
 import interfaceTest.Utils;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.TypeVariable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.Set;
+import java.util.function.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,7 +30,7 @@ public class LazyMStream<K, V> implements MStream<K, V> {
 	//	}
 
 	public Map<K, V> get() {
-		return upstream.get().collect(Collectors.toMap(entry -> entry.getKey(), value -> value.getValue()));
+		return upstream.get().collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
 	}
 
 	//	public <A> LazyMStream<K, A> remapValues(Function<V, A> remapper) {
@@ -64,9 +62,84 @@ public class LazyMStream<K, V> implements MStream<K, V> {
 
 	}
 
+	//https://stackoverflow.com/questions/43138164/java-8-streams-grouping-into-single-value
 	@Override public MStream<K, V> merge(MStream<K, V> toMerge, BinaryOperator<V> remapping) {
-		return null;
+		return new LazyMStream<>(Utils.logFunction(() ->
+				Stream.concat(this.upstream.get(), getStream(toMerge))
+						.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, remapping)).
+						entrySet().stream(), "merge")
+		);
 	}
+
+	@Override public MStream<K, LStream<V>> mergeAsLists(MStream<K, V> toMerge) {
+		LazyMStream<K, LStream<V>> merge = new LazyMStream<>(Utils.logFunction(() ->
+				Stream.concat(this.upstream.get(), getStream(toMerge))
+						.collect(Collectors.toMap(entry -> entry.getKey(),
+								entry -> EagerLStream.of(entry.getValue()), (l1, l2)
+										-> l1)).
+						entrySet().stream(), "merge as lists")
+		);
+		return merge;
+	}
+
+	private <KK, VV> Stream<Map.Entry<KK, VV>> getStream(MStream<KK, VV> other) {
+		if (other instanceof LazyMStream) {
+			LazyMStream<KK, VV> otherLazy = (LazyMStream<KK, VV>) other;
+			return otherLazy.upstream.get();
+		} else {
+			EagerMStream<KK, VV> otherEager = (EagerMStream<KK, VV>) other;
+			return otherEager.get().entrySet().stream();
+		}
+	}
+
+
+
+
+	//right Join, usar leftJoin al reves
+	//outer Join, hacer 2 lefts joins partiendo de las dos listas
+	@Override public <VV, A> MStream<K, A> leftJoin(MStream<K, VV> other, BiFunction<V, VV, A> remapping, Function<V,A> defaultMapping) {
+		return new LazyMStream<>(Utils.logFunction(() ->
+				{
+					Map<K, V> thisMap = get();
+					Map<K, VV> otherMap = other.get();
+					Set<Map.Entry<K, V>> entries = thisMap.entrySet();
+					HashMap<K, A> result = new HashMap<>();
+					for (Map.Entry<K, V> thisEntry : entries) {
+						VV vv = otherMap.get(thisEntry.getKey());
+						if (vv != null) {
+							result.put( thisEntry.getKey(), remapping.apply(thisEntry.getValue(), vv));
+						} else {
+							result.put(thisEntry.getKey(), defaultMapping.apply(thisEntry.getValue()));
+						}
+					}
+					return result.entrySet().stream();
+
+				}
+				,
+				"Inner join"));
+	}
+
+
+	@Override public <VV, A> MStream<K, A> innerJoin(MStream<K, VV> other, BiFunction<V, VV, A> remapping) {
+		return new LazyMStream<>(Utils.logFunction(() ->
+				{
+					Map<K, V> thisMap = get();
+					Map<K, VV> otherMap = other.get();
+					Set<Map.Entry<K, V>> entries = thisMap.entrySet();
+					HashMap<K, A> result = new HashMap<>();
+					for (Map.Entry<K, V> thisEntry : entries) {
+						VV vv = otherMap.get(thisEntry.getKey());
+						if (vv != null) {
+							result.put( thisEntry.getKey(), remapping.apply(thisEntry.getValue(), vv));
+						}
+					}
+					return result.entrySet().stream();
+
+				}
+				,
+				"Inner join"));
+	}
+
 
 	@Override public MStream<K, V> filterKeys(Predicate<K> predicate) {
 		return new LazyMStream<>(Utils.logFunction(() -> upstream.get().filter(entry -> predicate.test(entry.getKey())),
@@ -77,8 +150,6 @@ public class LazyMStream<K, V> implements MStream<K, V> {
 
 		return new LazyMStream<>(Utils.logFunction(() -> upstream.get().filter(entry -> predicate.test(entry.getValue())),
 				"Filtering values"));
-
-
 
 	}
 
@@ -91,7 +162,6 @@ public class LazyMStream<K, V> implements MStream<K, V> {
 		return new LazyLStream<>(Utils.logFunction(() -> upstream.get().map(entry -> entry.getKey()),
 				"Getting keys"));
 	}
-
 
 	@Override public <ValueType> LStream<LStream<ValueType>> getBuckets(Class<ValueType> clazz) {
 		return recursiveFlattening(clazz);
@@ -121,9 +191,6 @@ public class LazyMStream<K, V> implements MStream<K, V> {
 		}
 	}
 
-
-
-
 	private <Value> LStream<LStream<Value>> recursiveFlattening(Class<Value> valueClass) {
 		return new LazyLStream<>(Utils.logFunction(() -> {
 					Map<K, V> kvMap = get();
@@ -141,13 +208,12 @@ public class LazyMStream<K, V> implements MStream<K, V> {
 			if (listOrMap instanceof EagerMStream) {
 				addToLStreamAux(((EagerMStream) listOrMap).get(), result, valueClass);
 			} else {
-//				if (!listOrMap.getClass().isAssignableFrom(valueClass) && !listOrMap.getClass().isAssignableFrom(EagerLStream.class)) {
-//					throw new IllegalStateException("Error al obtener buckets. Se esperaba una clase distinta de: " + valueClass.getName());
-//				}
+				//				if (!listOrMap.getClass().isAssignableFrom(valueClass) && !listOrMap.getClass().isAssignableFrom(EagerLStream.class)) {
+				//					throw new IllegalStateException("Error al obtener buckets. Se esperaba una clase distinta de: " + valueClass.getName());
+				//				}
 				((EagerLStream) result).add(listOrMap);
 			}
 		}
 	}
-
 
 }

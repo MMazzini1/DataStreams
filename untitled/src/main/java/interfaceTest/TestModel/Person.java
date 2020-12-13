@@ -1,4 +1,4 @@
-package TestModel;
+package interfaceTest.TestModel;
 
 import java.util.List;
 
@@ -23,6 +23,10 @@ public class Person {
 
 	public Person(Long id) {
 		this.id = id;
+	}
+
+	public Person(Person p1, Person p2) {
+
 	}
 
 	public Integer getAge() {
