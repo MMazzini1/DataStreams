@@ -22,34 +22,39 @@ La librería permite reusar fácilmente una misma serie de operaciones, a difere
 También se cuenta con varias operaciones que permiten transformar LStream en MStream (por ejemplo, groupBy) y viceversa (por ejemplo, getLists), las cuales pueden resultar muy utiles en ciertos casos.
 
 
-Algunos ejemplos de uso:
+Algunos ejemplos de uso (en desarrollo):
 	
-	//Inicializo una lista de personas (edad, nombre, dni) con su dirección (calle, número, piso). 
-	List<Person> personas = Arrays.asList(new Person(21, "Pablo", 1232332L, new Adress("Cabildo", 2000, 4)),
-				new Person(33, "María", 17762322L, new Adress("Amenabar", 1245, 4)),
-				new Person(45, "José", 1878732L, new Adress("Libertador", 4432, 4))
-		);
+		//Inicialización de LStream. Por defecto es lazy.
+		LStream<Person> personas3 = LStream.of(personitas);
 
+		//Aplico un filter. Notése que no se ejecutara ninguna operación aún (por ser lazy)
+		LStream<Person> adultos = personas3.filter(persona -> persona.getAge() > 18);
 
-	//Inicialización de LStream. Por defecto es lazy.
-	LStream<Person> personas = LStream.of(personas);
-
-	//Aplico un filter. Notése que no se ejecutara ninguna operación aún (por ser lazy)
-	LStream<Optional<Integer>> adultos = personas.filter(persona -> persona.getAge() > 18)
-		
-	//Sumo las edades de los adultos. Tampoco se ejecutaran aún las operaciones, aún siendo una operacion terminal.
-	LStream<Optional<Integer>> edadesAdultosOpt = adultos
+		//Sumo las edades de los adultos. Tampoco se ejecutaran aún las operaciones, aún siendo una operacion terminal.
+		LStream<Optional<Integer>> edadesAdultosOpt = adultos
 				.map(persona -> persona.getAge())
 				.reduce(Integer::sum);
-				
-	//getOne ejecuta la cadena de streams y devuelve el resultado (tira una excepción si no había un único elemento)
-	Optional<Integer> edadesAdultos = edadesAdultosOpt.getOne()
+
+		//getOne ejecuta la cadena de streams y devuelve el resultado (tira una excepción si no había un único elemento)
+		Optional<Integer> edadesAdultos = edadesAdultosOpt.getOne()
+
+		//Se puede reusar un LStream sobre el cuál ya se opero
+		LStream<Person> byName = adultos.sort(persona -> persona.getName());
+
+		//Sort toma varargs
+		LStream<Person> byNameAgeAdress = adultos.sort(persona -> persona.getName(), persona -> persona.getAge(), persona -> persona.getAdress().getStreet());
+
+		//Ejecuto la cadena de streams y obtengo el resultado
+		List<Person> asList = byNameAgeAdress.getAsList();
+		
+		
+		//Agrupo a las personas por edad, y obtengo un mapa (un MStream)
+		MStream<Integer, LStream<Person>> integerLStreamMStream = adultos.groupBy(person -> person.getAge());
+		
+		
+
 	
-	//Se puede reusar un LStream sobre el cuál ya se opero
-	//Sort toma varargs y se encuentra overloadeado con dos variantes
-	personas.sort((persona1, persona2) -> persona1.getName().compareTo(persona2.getName()))
-	//o alternativamente
-	edadesAdultos.sort(persona -> persona.getName(), persona -> persona.getAge())
+
 	
   
  
