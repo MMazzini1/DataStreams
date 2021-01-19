@@ -9,7 +9,7 @@ La librería cuenta de dos abstracciones:
 LStream (interface) (representa una colección)
 MStream (interface) (representa un mapa)
 
-Ambas abstracciones ofrecen operaciones de alto nivel, comúnes al querer manipular y transformas datos contenidos en listas y mapas. 
+Ambas abstracciones ofrecen operaciones de alto nivel, comúnes al querer manipular y transformas datos contenidos en listas y mapas.
 
 Se ofrecen dos implementaciones para cada una, una lazy y otra eager.
 
@@ -20,6 +20,29 @@ La implementación eager realiza las operaciones en el momento, y wrappea una co
 La librería permite reusar fácilmente una misma serie de operaciones, a diferencia de lo que sucede con los streams comunes, los cuales no pueden operarse más de una vez sin recibir un "java.lang.IllegalStateException: stream has already been operated upon or closed". 
 
 También se cuenta con varias operaciones que permiten transformar LStream en MStream (por ejemplo, groupBy) y viceversa (por ejemplo, getLists), las cuales pueden resultar muy utiles en ciertos casos.
+
+
+Algunos ejemplos de uso:
+	
+	//Inicializo una lista de personas (edad, nombre, dni) con su dirección (calle, número, piso). 
+	List<Person> personas = Arrays.asList(new Person(21, "Pablo", 1232332L, new Adress("Cabildo", 2000, 4)),
+				new Person(33, "María", 17762322L, new Adress("Amenabar", 1245, 4)),
+				new Person(45, "José", 1878732L, new Adress("Libertador", 4432, 4))
+		);
+
+
+	//Inicialización de LStream. Por defecto es lazy.
+	LStream<Person> personas = LStream.of(personas);
+
+	//Aplico un filter. Notése que no se ejecutara ninguna operación aún (por ser lazy)
+	LStream<Optional<Integer>> adultos = personas.filter(persona -> persona.getAge() > 18)
+		
+	//Sumo las edades de los adultos. Tampoco se ejecutaran aún las operaciones, aún siendo una operacion terminal.
+	LStream<Optional<Integer>> edadesAdultosOpt = adultos
+				.map(persona -> persona.getAge())
+				.reduce(Integer::sum);
+				
+	Optional<Integer> edadesAdultos = edadesAdultosOpt
   
  
 API LSTREAM
