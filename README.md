@@ -19,7 +19,7 @@ La implementación eager realiza las operaciones en el momento, y wrappea una co
 
 La librería permite reusar fácilmente una misma serie de operaciones, a diferencia de lo que sucede con los streams comunes, los cuales no pueden operarse más de una vez sin recibir un "java.lang.IllegalStateException: stream has already been operated upon or closed". 
 
-También se cuenta con varias operaciones que permiten transformas LStream en MStream (por ejemplo, groupBy) o viceversa (por ejemplo, getLists), las cuales pueden resultar muy utiles en ciertos casos.
+También se cuenta con varias operaciones que permiten transformar LStream en MStream (por ejemplo, groupBy) y viceversa (por ejemplo, getLists), las cuales pueden resultar muy utiles en ciertos casos.
   
  
 API LSTREAM
