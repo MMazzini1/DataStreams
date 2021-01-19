@@ -1,6 +1,6 @@
 # DataStreams
 Libreria para facilitar transformaciones de listas y mapas. 
-Híbrido entre collections y stream. Inspirtado en la programación funcional y los streams de java 8.
+Híbrido entre collections y stream. Inspirado en la programación funcional y los streams de java 8.
 
 
 (En desarrollo)
