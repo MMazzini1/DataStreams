@@ -10,10 +10,15 @@ LStream (interface) (representa una colección)
 MStream (interface) (representa un mapa)
 
 Ambas abstracciones ofrecen operaciones de alto nivel, comúnes al querer manipular y transformas datos contenidos en listas y mapas. 
+
 Se ofrecen dos implementaciones para cada una, una lazy y otra eager.
+
 Las implementación lazy no realizan ningún calculo hasta que no se realice un "get", el cuál dispara todas las operaciones. Esto funciona utilizando un Supplier<Stream<T>> en el que se van concatenando todas las operaciones. 
+
 La implementación eager realiza las operaciones en el momento, y wrappea una colección o un mapa sobre el que opera.
+
 La librería permite reusar fácilmente una misma serie de operaciones, a diferencia de lo que sucede con los streams comunes, los cuales sólo pueden usarse una vez sin recibir un "java.lang.IllegalStateException: stream has already been operated upon or closed".
+
 También se cuenta con varias operaciones que permiten transformas LStream en MStream (por ejemplo, groupBy) o viceversa (por ejemplo, getLists), las cuales pueden resultar muy utiles en ciertos casos.
   
  
