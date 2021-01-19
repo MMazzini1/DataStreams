@@ -42,7 +42,15 @@ Algunos ejemplos de uso:
 				.map(persona -> persona.getAge())
 				.reduce(Integer::sum);
 				
-	Optional<Integer> edadesAdultos = edadesAdultosOpt
+	//getOne ejecuta la cadena de streams y devuelve el resultado (tira una excepción si no había un único elemento)
+	Optional<Integer> edadesAdultos = edadesAdultosOpt.getOne()
+	
+	//Se puede reusar un LStream sobre el cuál ya se opero
+	//Sort toma varargs y se encuentra overloadeado con dos variantes
+	personas.sort((persona1, persona2) -> persona1.getName().compareTo(persona2.getName()))
+	//o alternativamente
+	edadesAdultos.sort(persona -> persona.getName(), persona -> persona.getAge())
+	
   
  
 API LSTREAM
