@@ -17,7 +17,7 @@ Las implementación lazy no realizan ningún calculo hasta que no se realice un 
 
 La implementación eager realiza las operaciones en el momento, y wrappea una colección o un mapa sobre el que opera.
 
-La librería permite reusar fácilmente una misma serie de operaciones, a diferencia de lo que sucede con los streams comunes, los cuales sólo pueden usarse una vez sin recibir un "java.lang.IllegalStateException: stream has already been operated upon or closed".
+La librería permite reusar fácilmente una misma serie de operaciones, a diferencia de lo que sucede con los streams comunes, los cuales no pueden operarse más de una vez sin recibir un "java.lang.IllegalStateException: stream has already been operated upon or closed". 
 
 También se cuenta con varias operaciones que permiten transformas LStream en MStream (por ejemplo, groupBy) o viceversa (por ejemplo, getLists), las cuales pueden resultar muy utiles en ciertos casos.
   
